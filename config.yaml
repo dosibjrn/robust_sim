@@ -14,7 +14,7 @@ vt_weights:    "data/vt_weights.json"
 
 # Portfolio parameters for a 30-year DCA, moderate risk
 te_limit:      0.04       # 4% annual tracking error cap
-risk_aversion: 4.0       # higher gamma mutes noisy signals
+risk_aversion: 0.1       # higher gamma mutes noisy signals
 
 # Minimum group weights
 equity_floor:  0.60       # at least 60% in equities (incl. BTC)

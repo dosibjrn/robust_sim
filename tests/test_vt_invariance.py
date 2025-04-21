@@ -1,24 +1,23 @@
-import json, numpy as np, pandas as pd, yaml, tempfile
+import json, numpy as np
 from robust_sim.pipeline import run
 
-def test_vt_invariance():
-    vt = json.load(open("data/vt_weights.json"))
+def test_vt(tmp_path):
     cfg = {
-        "assets":{
-            "equities":{"US":"^GSPC"},
-            "bonds":   {},
-        },
-        "risk_free_fred":"DGS1",
-        "start_date":"2010-01-01",
-        "bayesian":False,
-        "te_limit":None,
-        "equity_floor":0.8,
-        "log_level":"CRITICAL"
+      "use_local_data": True,
+      "assets":{"equities":["US"],"bonds":["EUNA"],"wood":["FinWood"]},
+      "equity_csv":"data/equity_prices.csv",
+      "bond_csv":"data/bond_prices.csv",
+      "wood_csv":"data/wood_prices.csv",
+      "risk_free_csv":"data/rf_real.csv",
+      "vt_weights":"data/vt_weights.json",
+      "bayesian": False,
+      "te_limit": None,
+      "equity_floor": 0.8,
+      "risk_aversion": 5,
+      "shr_tau": 0.025,
+      "log_level":"CRITICAL"
     }
-    with tempfile.NamedTemporaryFile("w",suffix=".yml",delete=False) as f:
-        yaml.safe_dump(cfg,f)
-        cfg_path=f.name
-    weights = run(cfg_path,"tmp.csv",refresh_data=False)
-    w = weights[:len(vt)]
-    vt_vec = np.array(list(vt.values()))[:len(w)]
-    assert np.allclose(w, vt_vec, atol=1e-6)
+    import yaml; yaml.safe_dump(cfg, open(tmp_path/"cfg.yml","w"))
+    weights = run(str(tmp_path/"cfg.yml"), out_csv=str(tmp_path/"w.csv"))
+    vt = np.array(list(json.load(open("data/vt_weights.json")).values()))
+    assert np.allclose(weights, vt, atol=1e-6)

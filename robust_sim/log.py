@@ -1,9 +1,9 @@
 import logging, sys
 def get_logger(level="INFO"):
-    lg = logging.getLogger("robust_meta_sim")
-    if not lg.handlers:
+    log = logging.getLogger("rms_v18")
+    if not log.handlers:
         h = logging.StreamHandler(sys.stdout)
         h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s - %(message)s"))
-        lg.addHandler(h)
-    lg.setLevel(level)
-    return lg
+        log.addHandler(h)
+    log.setLevel(level)
+    return log

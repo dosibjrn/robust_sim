@@ -4,7 +4,8 @@ from .pipeline import run
 @click.command()
 @click.option("-c","--config", default="config.yaml", type=click.Path())
 @click.option("-o","--output", default="weights.csv", type=click.Path())
-@click.option("--refresh-data", is_flag=True, help="Fetch latest prices before optimisation.")
+@click.option("--refresh-data", is_flag=True,
+              help="Re-run fetch_data.build_and_save before optimising.")
 def main(config, output, refresh_data):
     run(config, output, refresh_data)
 

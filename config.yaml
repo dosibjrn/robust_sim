@@ -1,18 +1,38 @@
-assets:
-  equities:
-    US:       "^GSPC"
-    Dev_exUS: "IEV"
-    EM:       "EEM"
-    BTC:      "BTC-USD"
-  bonds:
-    EUNA:     "EUNA.DE"
-# Wood is embedded in monthly_raw.csv
-risk_free_fred: "DGS1"
-start_date:    "1990-01-01"
+# ---------------------------------------
+# Data sources (all local CSVs)
+# ---------------------------------------
+use_local_data: true
 
-risk_aversion: 5.0
-te_limit:      0.04
-equity_floor:  0.80
-bayesian:      true
-shr_tau:       0.025
-log_level:     INFO
+assets:
+  equities: ["US","Dev_exUS","EM","BTC"]
+  bonds:    ["EUNA"]
+  real_assets: ["FinWood"]     # your wood index
+risk_free_csv:  "data/rf_real.csv"
+equity_csv:     "data/equity_prices.csv"
+bond_csv:       "data/bond_prices.csv"
+wood_csv:       "data/wood_prices.csv"
+vt_weights:     "data/vt_weights.json"
+
+# ---------------------------------------
+# Model parameters
+# ---------------------------------------
+risk_aversion: 5.0   # gamma
+te_limit: 0.04       # annual TE limit
+equity_floor: 0.8    # min weight in equities
+bond_floor: 0.1      # min weight in bonds
+real_floor: 0.0      # min weight in real assets
+
+cvar_threshold: 0.95 # for reporting only
+
+# Per-asset weight caps
+asset_caps:
+  US:       1.00
+  Dev_exUS: 1.00
+  EM:       0.50
+  BTC:      0.10
+  FinWood:  0.20
+  EUNA:     1.00
+
+bayesian:  true
+shr_tau:   0.025
+log_level: INFO

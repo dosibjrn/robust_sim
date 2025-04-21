@@ -1,0 +1,14 @@
+# pipeline.py
+cfg=load(cfg_path)
+log=get_logger(cfg["log_level"])
+# 1. load_local_prices -> raw prices
+# 2. compute excess returns -> DataFrame E
+# 3. cov, sigma, n = calc_cov(E)
+# 4. mu_eq = implied_mu(cov)
+# 5. mu_hat = E.mean()*12
+# 6. tau = calibrate_tau(mu_eq, cov)
+# 7. mu_post = posterior(mu_eq, mu_hat, cov, sigma, n, tau)
+# 8. w = solve_qp(
+#        mu_post if bayesian else mu_eq,
+#        cov, vt, gamma, te, floors, caps, cvar=0.95)
+# 9. save weights, report Sharpe, CVaR, TE, group exposures

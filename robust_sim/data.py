@@ -1,43 +1,29 @@
-# Updated robust_sim/data.py with proper wood_prices.csv handling
-
 import pandas as pd
 from pandas.tseries.offsets import MonthEnd
 
 def prepare_data(cfg, refresh=False):
     """
-    Load and preprocess local CSVs:
-      - data/equity_prices.csv  (Date index)
-      - data/bond_prices.csv    (Date index)
-      - data/wood_prices.csv    (Year, Mänty, Kuusi, Koivu)
-      - data/rf_real.csv        (Date index)
-    Returns:
-      excess returns DataFrame with columns US, Dev_exUS, EM, BTC, EUNA, FinWood
+    Load local CSVs, build monthly excess returns DataFrame.
     """
-    # 1. Read price series
-    eq = pd.read_csv("data/equity_prices.csv", parse_dates=["Date"], index_col="Date")
-    bd = pd.read_csv("data/bond_prices.csv",    parse_dates=["Date"], index_col="Date")
+    # Load raw price series
+    eq = pd.read_csv(cfg["equity_csv"], parse_dates=["Date"], index_col="Date")
+    bd = pd.read_csv(cfg["bond_csv"],   parse_dates=["Date"], index_col="Date")
+    wd_annual = pd.read_csv(cfg["wood_csv"])
+    # Convert annual wood->monthly
+    wd_annual["Date"] = pd.to_datetime(wd_annual["Year"].astype(str), format="%Y") + MonthEnd(0)
+    wd = wd_annual.set_index("Date")[["Mänty (€)","Kuusi (€)","Koivu (€)"]]
+    wd_monthly = wd.resample("M").interpolate()
+    finwood = pd.DataFrame({"FinWood": wd_monthly.mean(axis=1)})
 
-    # 2. Read and convert annual wood prices to monthly FinWood index
-    dfw = pd.read_csv("data/wood_prices.csv")
-    dfw["Date"] = pd.to_datetime(dfw["Year"].astype(str), format="%Y") + MonthEnd(0)
-    dfw = dfw.set_index("Date")[["Mänty (€)","Kuusi (€)","Koivu (€)"]]
-    # Ensure values in euros; assume wood_prices.csv already in €
-    # Resample to month-end and interpolate linearly
-    dfw_monthly = dfw.resample("M").interpolate()
-    # Combine into single FinWood price (average of species)
-    finwood = pd.DataFrame({"FinWood": dfw_monthly.mean(axis=1)})
-
-    # 3. Read risk-free series
-    rf = pd.read_csv("data/rf_real.csv", parse_dates=["Date"], index_col="Date")["RF"]
-
-    # 4. Combine all price series
+    # Combine price series
     prices = pd.concat([eq, bd, finwood], axis=1).dropna()
 
-    # 5. Resample to month-end
+    # Resample to month-end
     prices = prices.resample("M").last()
+    rf = pd.read_csv(cfg["risk_free_csv"], parse_dates=["Date"], index_col="Date")["RF"]
     rf_mon = rf.resample("M").last()
 
-    # 6. Compute returns and excess returns
+    # Compute returns and excess returns
     ret = prices.pct_change().dropna()
     excess = ret.sub(rf_mon, axis=0).dropna()
 

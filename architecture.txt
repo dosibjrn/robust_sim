@@ -1,0 +1,19 @@
+robust_meta_sim_v20/
+ ├ data/
+ │   vt_weights.json
+ │   equity_prices.csv
+ │   bond_prices.csv
+ │   wood_prices.csv
+ │   rf_real.csv
+ ├ config.yaml
+ └ robust_sim/
+     ├ __init__.py
+     ├ config.py
+     ├ log.py
+     ├ data.py        # load_local -> monthly_raw -> excess, returns DataFrame
+     ├ risk.py        # calc_cov + tail risk scorers
+     ├ implied.py     # implied_mu only
+     ├ posterior.py   # BL with adaptive tau
+     ├ optim.py       # QP with CVaR95, floors, caps matrix
+     ├ pipeline.py    # unified orchestrator
+     └ cli.py

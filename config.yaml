@@ -1,0 +1,18 @@
+assets:
+  equities:
+    US:       "^GSPC"
+    Dev_exUS: "IEV"
+    EM:       "EEM"
+    BTC:      "BTC-USD"
+  bonds:
+    EUNA:     "EUNA.DE"
+# Wood is embedded in monthly_raw.csv
+risk_free_fred: "DGS1"
+start_date:    "1990-01-01"
+
+risk_aversion: 5.0
+te_limit:      0.04
+equity_floor:  0.80
+bayesian:      true
+shr_tau:       0.025
+log_level:     INFO

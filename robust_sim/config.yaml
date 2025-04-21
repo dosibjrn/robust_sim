@@ -1,0 +1,20 @@
+# ----- Global config -----
+assets:
+  equities:
+    US:       "^GSPC"        # S&P 500
+    Dev_exUS: "IEV"          # iShares Europe ETF (proxy for developed ex‑US)
+    EM:       "EEM"          # iShares Emerging Markets
+    BTC:      "BTC-USD"      # Bitcoin (log‑price)
+  bonds:
+    EUNA:     "IEAG.DE"      # iShares € Gov Bond (placeholder—use any euro‑agg bond ETF)
+
+wood_url: ""                 # not used: we read data/wood_prices.csv directly
+risk_free_fred: "DGS1"       # 1‑yr Treasury yield (%)
+start_date: "1983-01-01"
+
+risk_aversion: 5.0
+te_limit:      0.04          # tracking‑error vol (annualised)
+equity_floor:  0.80          # ≥ 80 % in equities
+bayesian:      true
+shr_tau:       0.025
+log_level:     INFO

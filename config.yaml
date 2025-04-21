@@ -1,33 +1,45 @@
 use_local_data: true
 
 assets:
-  equities: ["US","Dev_exUS","EM","BTC"]
-  bonds:    ["EUNA"]
+  equities:    ["US", "Dev_exUS", "EM", "BTC"]
+  bonds:       ["EUNA"]
   real_assets: ["FinWood"]
 
-risk_free_csv:  "data/rf_real.csv"
-equity_csv:     "data/equity_prices.csv"
-bond_csv:       "data/bond_prices.csv"
-wood_csv:       "data/wood_prices.csv"
-vt_weights:     "data/vt_weights.json"
+# Local CSV paths (produced by fetch_data.py)
+risk_free_csv: "data/rf_real.csv"
+equity_csv:    "data/equity_prices.csv"
+bond_csv:      "data/bond_prices.csv"
+wood_csv:      "data/wood_prices.csv"
+vt_weights:    "data/vt_weights.json"
 
-risk_aversion: 5.0
-te_limit:      0.04
-equity_floor:  0.8
-bond_floor:    0.1
-real_floor:    0.0
+# Portfolio parameters for a 30-year DCA, moderate risk
+te_limit:      0.04       # 4% annual tracking error cap
+risk_aversion: 4.0       # higher gamma mutes noisy signals
 
-cvar_threshold: 0.95
-cvar_limit:     null    # set e.g.  -0.02 to enforce CVaR95% ≤ -2%
+# Minimum group weights
+equity_floor:  0.60       # at least 60% in equities (incl. BTC)
+bond_floor:    0.00       # at least 10% in bonds
+real_floor:    0.00       # at least  5% in real assets
 
+# Per-asset maximum weights
 asset_caps:
-  US:       1.00
-  Dev_exUS: 1.00
-  EM:       1.00 #0.50
-  BTC:      1.00 #0.10
-  FinWood:  1.00 #0.20
-  EUNA:     1.00
+  US:       0.80
+  Dev_exUS: 0.80
+  EM:       0.25
+  BTC:      0.10
+  FinWood:  0.50
+  EUNA:     0.50
 
-bayesian:    true
-shr_tau:     0.025
-log_level:   INFO
+# Black–Litterman shrinkage
+bayesian: true
+shr_tau:  0.05
+
+# Tail-risk reporting (and optional enforcement)
+cvar_threshold: 0.95
+cvar_limit:     null    # worst 5% annual loss no worse than -5%
+
+# Entropy regularization to discourage extreme concentration
+entropy_lambda: 0.01
+
+# Logging
+log_level: INFO

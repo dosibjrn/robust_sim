@@ -17,3 +17,17 @@ robust_meta_sim_v20/
      ├ optim.py       # QP with CVaR95, floors, caps matrix
      ├ pipeline.py    # unified orchestrator
      └ cli.py
+
+robust_meta_sim_v21/
+├ config.yaml           # adds cvar_limit
+├ fetch_data.py         # unchanged
+└ robust_sim/
+  ├ config.py
+  ├ log.py
+  ├ data.py            ← updated
+  ├ risk.py            ← updated for CVaR constraint
+  ├ implied.py
+  ├ posterior.py
+  ├ optim.py           ← updated
+  ├ pipeline.py        ← updated
+  └ cli.py

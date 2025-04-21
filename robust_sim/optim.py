@@ -1,43 +1,106 @@
+# robust_sim/optim.py
+
 import numpy as np
 import scipy.optimize as opt
 
-def solve_qp(mu, cov, vt, gamma,
-             te_limit, floors, caps, logger):
+# Try to import cvxpy for optional CVaR constraint
+try:
+    import cvxpy as cp
+    USE_CVX = True
+except ImportError:
+    USE_CVX = False
+
+def solve_qp(mu, cov, vt, gamma, te, floors, caps, log,
+             cvar_limit=None, excess=None, alpha=None):
     """
-    Quadratic program:
-      maximize  w' mu - 0.5 gamma w' cov w
-      subject to sum(w)=1, w>=0,
-                 TE^2=(w-vt)'cov(w-vt) <= te_limit^2,
-                 group floors, per-asset caps.
+    Solve the portfolio optimization problem.
+
+    Parameters
+    ----------
+    mu : np.ndarray
+        Expected returns vector.
+    cov : np.ndarray
+        Covariance matrix.
+    vt : np.ndarray
+        Benchmark (VT) weights.
+    gamma : float
+        Risk aversion parameter.
+    te : float or None
+        Tracking-error limit (annualized).
+    floors : dict
+        Floor constraints with keys "equity_floor", "bond_floor", "real_floor",
+        and index lists "eq", "bd", "rv".
+    caps : list or np.ndarray
+        Per-asset upper bounds.
+    log : logging.Logger
+        Logger for warnings.
+    cvar_limit : float or None
+        If set and cvxpy is installed, enforce CVaR constraint.
+    excess : pandas.DataFrame
+        Historical excess returns (for CVaR).
+    alpha : float
+        CVaR confidence level (e.g. 0.95).
+
+    Returns
+    -------
+    w : np.ndarray
+        Optimized weights.
     """
     n = len(mu)
 
-    # Objective: negative utility
-    def obj(w):
+    # -- CVaR-constrained QP via cvxpy if requested and available --
+    if cvar_limit is not None and USE_CVX and excess is not None:
+        w = cp.Variable(n)
+        v = cp.Variable()
+        z = cp.Variable(excess.shape[0])
+
+        # Objective: maximize mean-variance utility
+        obj = cp.Maximize(mu @ w - 0.5 * gamma * cp.quad_form(w, cov))
+
+        # Constraints
+        cons = [
+            cp.sum(w) == 1,
+            w >= 0,
+            w <= caps,
+            cp.quad_form(w - vt, cov) <= te**2,
+            cp.sum(w[floors["eq"]])  >= floors["equity_floor"],
+            cp.sum(w[floors["bd"]])  >= floors["bond_floor"],
+            cp.sum(w[floors["rv"]])  >= floors["real_floor"],
+            z >= v - excess.values @ w,
+            z >= 0,
+            v + (1/(1 - alpha)) * (cp.sum(z) / excess.shape[0]) <= cvar_limit
+        ]
+
+        # Solve with OSQP if available, else ECOS
+        solver = cp.OSQP if "OSQP" in cp.installed_solvers() else cp.ECOS
+        prob = cp.Problem(obj, cons)
+        prob.solve(solver=solver)
+
+        return w.value
+
+    # -- Fallback: standard mean-variance via SciPy SLSQP (no CVaR) --
+    def objective(w):
         return -(w @ mu) + 0.5 * gamma * (w @ cov @ w)
 
-    # Constraints
-    cons = [{"type":"eq", "fun": lambda w: w.sum() - 1}]
-    # Tracking error
-    if te_limit:
-        cons.append({
-            "type":"ineq",
-            "fun": lambda w: te_limit**2 - (w - vt) @ cov @ (w - vt)
-        })
-    # Group floors
-    eq_idx, bd_idx, rv_idx = floors["indices"]
-    cons.append({"type":"ineq","fun": lambda w: w[eq_idx].sum() - floors["equity_floor"]})
-    cons.append({"type":"ineq","fun": lambda w: w[bd_idx].sum() - floors["bond_floor"]})
-    cons.append({"type":"ineq","fun": lambda w: w[rv_idx].sum() - floors["real_floor"]})
+    cons = [
+        {"type": "eq", "fun": lambda w: np.sum(w) - 1},
+        {"type": "ineq", "fun": lambda w: np.sum(w[floors["eq"]]) - floors["equity_floor"]},
+        {"type": "ineq", "fun": lambda w: np.sum(w[floors["bd"]]) - floors["bond_floor"]},
+        {"type": "ineq", "fun": lambda w: np.sum(w[floors["rv"]]) - floors["real_floor"]}
+    ]
 
-    # Bounds
+    if te:
+        cons.append({
+            "type": "ineq",
+            "fun": lambda w: te**2 - (w - vt) @ cov @ (w - vt)
+        })
+
     bounds = [(0, caps[i]) for i in range(n)]
 
-    # Initial guess: vt
-    w0 = vt.copy()
-
-    res = opt.minimize(obj, w0, method="SLSQP",
+    res = opt.minimize(objective, vt, method="SLSQP",
                        bounds=bounds, constraints=cons)
+
     if not res.success:
-        logger.warning("QP solver did not converge: %s", res.message)
+        log.warning("QP did not converge: %s", res.message)
+
     return res.x

@@ -12,3 +12,22 @@ log=get_logger(cfg["log_level"])
 #        mu_post if bayesian else mu_eq,
 #        cov, vt, gamma, te, floors, caps, cvar=0.95)
 # 9. save weights, report Sharpe, CVaR, TE, group exposures
+
+....
+
+# data.py
+prices = concat(eq,bond,wood).resample("ME").last()
+ret    = prices.pct_change(fill_method=None).dropna()
+excess = ret - rf.resample("ME").last()
+
+# risk.py
+cov, sigma, n = calc_cov(excess)
+# ...
+def compute_cvar(excess, w, alpha):  # historical
+    port = excess.dot(w)
+    var = quantile(port,1-alpha)
+    return mean(port[port <= var])
+
+# optim.py
+if config["cvar_limit"]:
+    # Add variable v and z_t via cvxpy, else skip CVaR constraint

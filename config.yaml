@@ -1,38 +1,33 @@
-# ---------------------------------------
-# Data sources (all local CSVs)
-# ---------------------------------------
 use_local_data: true
 
 assets:
   equities: ["US","Dev_exUS","EM","BTC"]
   bonds:    ["EUNA"]
-  real_assets: ["FinWood"]     # your wood index
+  real_assets: ["FinWood"]
+
 risk_free_csv:  "data/rf_real.csv"
 equity_csv:     "data/equity_prices.csv"
 bond_csv:       "data/bond_prices.csv"
 wood_csv:       "data/wood_prices.csv"
 vt_weights:     "data/vt_weights.json"
 
-# ---------------------------------------
-# Model parameters
-# ---------------------------------------
-risk_aversion: 5.0   # gamma
-te_limit: 0.04       # annual TE limit
-equity_floor: 0.8    # min weight in equities
-bond_floor: 0.1      # min weight in bonds
-real_floor: 0.0      # min weight in real assets
+risk_aversion: 5.0
+te_limit:      0.04
+equity_floor:  0.8
+bond_floor:    0.1
+real_floor:    0.0
 
-cvar_threshold: 0.95 # for reporting only
+cvar_threshold: 0.95
+cvar_limit:     null    # set e.g.  -0.02 to enforce CVaR95% ≤ -2%
 
-# Per-asset weight caps
 asset_caps:
   US:       1.00
   Dev_exUS: 1.00
-  EM:       0.50
-  BTC:      0.10
-  FinWood:  0.20
+  EM:       1.00 #0.50
+  BTC:      1.00 #0.10
+  FinWood:  1.00 #0.20
   EUNA:     1.00
 
-bayesian:  true
-shr_tau:   0.025
-log_level: INFO
+bayesian:    true
+shr_tau:     0.025
+log_level:   INFO
